@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 from helpers import *
 
 verbose = True
@@ -12,30 +13,44 @@ for row in instructions[:1000].itertuples():
     input_values = '' if pd.isna(input_values) else input_values
     prompt_final = prompt + input_values
 
-    response = get_deepseek_response(prompt_final)
+    retry_attempts = 3
+    attempt = 0
+    while attempt < retry_attempts:
+        try:
+            attempt += 1
+            response = get_deepseek_response(prompt_final)
 
-    if response.status_code == 200:
-        response = response.json()
-        generated_output = response['choices'][0]['message']['content']
-        thought_process, real_output = parse_reasoned_output(generated_output)
-        sample = [
-            index,
-            prompt,
-            input_values,
-            thought_process,
-            real_output
-        ]
-        output_df.loc[len(output_df)] = sample
-        if index % 25 == 0: output_df.to_csv(output_file_path)
+            if response.status_code == 200:
+                generated_output = response.json()['choices'][0]['message']['content']
+                thought_process, real_output = parse_reasoned_output(generated_output)
+                sample = [
+                    index,
+                    prompt,
+                    input_values,
+                    thought_process,
+                    real_output
+                ]
+                output_df.loc[len(output_df)] = sample
 
-        if verbose:
-            print(index, prompt, input_values)
-            print('THINK_START', thought_process, 'THINK_END')
-            print('OUTPUT_START', real_output, 'OUTPUT_END')
-    else:
-        output_df.to_csv(output_file_path)
-        print(f"Error: { response.status_code }, { response.text }")
-        print('PROMPT INDEX: ' + str(index))
-        exit()
+                if index % 25 == 0: output_df.to_csv(output_file_path)
+
+                if verbose:
+                    print(index, prompt, input_values)
+                    print('THINK_START', thought_process, 'THINK_END')
+                    print('OUTPUT_START', real_output, 'OUTPUT_END')
+
+                break
+            else:
+                raise Exception(f"Error: { response.status_code } - { response.text }")
+        except Exception as exception:
+            delay_amount = attempt * 30 # attempt * 30 seconds
+            print(f"Attempt { attempt } failed: { exception }")
+
+            if attempt < retry_attempts:
+                time.sleep(delay_amount)
+            else:
+                output_df.to_csv(output_file_path)
+                print(f"Final error on index { index }: { exception }")
+                exit()
 
 output_df.to_csv(output_file_path)

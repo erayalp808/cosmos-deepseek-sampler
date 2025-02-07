@@ -45,6 +45,6 @@ def get_output_df(file_path):
         print(f"File { file_path } not found. Generating a new CSV file.")
         columns = ['talimat_no', 'talimat', 'giriş', 'düşünce', 'çıktı']
         df = pd.DataFrame(columns=columns)
-        df.to_csv(file_path, index=False)
+        df.to_csv(file_path)
 
         return df
