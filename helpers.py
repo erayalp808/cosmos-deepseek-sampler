@@ -17,6 +17,10 @@ def get_deepseek_response(prompt):
         "model": "deepseek-r1-distill-llama-70b",
         "messages": [
             {
+                "role": "system",
+                "content": "Please output your thought process and final answer in Turkish."
+            },
+            {
                 "role": "user",
                 "content": prompt
             },
@@ -30,11 +34,12 @@ def parse_reasoned_output(output):
     think_elements = re.findall(think_tag_pattern, output, re.DOTALL)
     real_output = ''
     end_of_thinking_str_index = output.rfind('</think>')
+    thought_process = output[:end_of_thinking_str_index] if not think_elements else think_elements[0]
 
     if end_of_thinking_str_index != -1:
         real_output = output[end_of_thinking_str_index + len('</think>'):].strip()
 
-    return think_elements[0], real_output
+    return thought_process, real_output
 
 def get_output_df(file_path):
     try:
