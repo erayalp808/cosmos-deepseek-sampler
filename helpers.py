@@ -2,6 +2,8 @@ import requests
 import re
 from dotenv import load_dotenv
 import os
+import pandas as pd
+import numpy as np
 
 load_dotenv()
 
@@ -24,17 +26,25 @@ def get_deepseek_response(prompt):
     return requests.post(url, headers=headers, json=data)
 
 def parse_reasoned_output(output):
-        think_tag_pattern = r'<think>(.*?)</think>'
-        think_elements = re.findall(think_tag_pattern, output, re.DOTALL)
+    think_tag_pattern = r'<think>(.*?)</think>'
+    think_elements = re.findall(think_tag_pattern, output, re.DOTALL)
+    real_output = ''
+    end_of_thinking_str_index = output.rfind('</think>')
 
-        print('THINK_START', think_elements[0], 'THINK_END')
+    if end_of_thinking_str_index != -1:
+        real_output = output[end_of_thinking_str_index + len('</think>'):].strip()
 
-        print('OUTPUT_START')
-        last_think_end = output.rfind('</think>')
+    return think_elements[0], real_output
 
-        if last_think_end != -1:
-            content_after_last_think = output[last_think_end + len('</think>'):].strip()
-            print(content_after_last_think)
-        else:
-            print('No closing </think> tag found.')
-        print('OUTPUT_END')
+def get_output_df(file_path):
+    try:
+        data = pd.read_csv(file_path)
+
+        return data
+    except FileNotFoundError:
+        print(f"File { file_path } not found. Generating a new CSV file.")
+        columns = ['talimat_no', 'talimat', 'giriş', 'düşünce', 'çıktı']
+        df = pd.DataFrame(columns=columns)
+        df.to_csv(file_path, index=False)
+
+        return df
