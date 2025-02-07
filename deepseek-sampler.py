@@ -7,7 +7,7 @@ instructions = pd.read_csv('instructions.csv')
 output_file_path = 'turkish_instructions.csv'
 output_df = get_output_df(output_file_path)
 
-for row in instructions[:10].itertuples():
+for row in instructions[:1000].itertuples():
     index, _, prompt, input_values, output = row
     input_values = '' if pd.isna(input_values) else input_values
     prompt_final = prompt + input_values
@@ -33,10 +33,9 @@ for row in instructions[:10].itertuples():
             print('THINK_START', thought_process, 'THINK_END')
             print('OUTPUT_START', real_output, 'OUTPUT_END')
     else:
-        print(f"Error: { response.status_code }, { response.text }")
-        print('PROMPT INDEX: ' + index)
         output_df.to_csv(output_file_path)
+        print(f"Error: { response.status_code }, { response.text }")
+        print('PROMPT INDEX: ' + str(index))
         exit()
-
 
 output_df.to_csv(output_file_path)
