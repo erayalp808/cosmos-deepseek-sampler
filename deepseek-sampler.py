@@ -26,6 +26,7 @@ for row in instructions[:10].itertuples():
             real_output
         ]
         output_df.loc[len(output_df)] = sample
+        if index % 25 == 0: output_df.to_csv(output_file_path)
 
         if verbose:
             print(index, prompt, input_values)
@@ -33,5 +34,9 @@ for row in instructions[:10].itertuples():
             print('OUTPUT_START', real_output, 'OUTPUT_END')
     else:
         print(f"Error: { response.status_code }, { response.text }")
+        print('PROMPT INDEX: ' + index)
+        output_df.to_csv(output_file_path)
+        exit()
+
 
 output_df.to_csv(output_file_path)
