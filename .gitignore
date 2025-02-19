@@ -1,0 +1,97 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+*.env
+*.venv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Test and coverage reports
+.coverage
+htmlcov/
+.tox/
+.nosetests.xml
+coverage.xml
+*.cover
+*.pytest_cache/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and debugging
+*.log
+logs/
+debug.log
+
+# Environment-specific files
+.env
+*.envrc
+*.ini
+*.toml
+*.yaml
+*.yml
+
+# Packaging
+*.egg-info/
+*.egg
+dist/
+build/
+pip-wheel-metadata/
+
+# Cache files
+*.cache
+.cache/
+
+# MyPy type checking
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Docker-related files
+.dockerignore
+docker-compose.override.yml
+
+# Machine learning artifacts
+*.h5
+*.hdf5
+*.pkl
+*.model
+*.joblib
+*.onnx
+*.pb
+
+# Streamlit and other tools
+.streamlit/
+.mlflow/
+wandb/
+lightning_logs/
+
+# Jupyter Lab settings
+.lab/
+
+# Local database files
+*.sqlite3
+*.db
+
+# PyCharm project files
+*.iml
+.idea/
+
+# Ignore everything in data/ directory except .keep file
+data/*
+!data/.keep
