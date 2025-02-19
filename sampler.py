@@ -105,7 +105,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
             payload = {
                 "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
+                "temperature": 0.3,
                 "max_tokens": 4096,
                 "top_p": 0.95,
                 "stream": False,
@@ -185,8 +185,8 @@ class DeepSeekSamplerSpider(scrapy.Spider):
             soru=row["soru"],
             cevap=row["cevap"],
             secenekler=row["secenekler"],
-            dusunce=reasoning,
-            cikti=output_message,
+            dusunce=reasoning.strip(),
+            cikti=output_message.strip(),
             deepseek_cevap=deepseek_answer,
             isabet=accuracy
         )
