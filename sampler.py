@@ -41,9 +41,11 @@ class DeepSeekSample(scrapy.Item):
     soru = scrapy.Field()
     cevap = scrapy.Field()
     secenekler = scrapy.Field()
+    harf_secenekler = scrapy.Field()
     dusunce = scrapy.Field()
     cikti = scrapy.Field()
     deepseek_cevap = scrapy.Field()
+    dogru_cevap = scrapy.Field()
     isabet = scrapy.Field()
 
 class DeepSeekSamplerSpider(scrapy.Spider):
@@ -71,7 +73,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
                 "format": "csv",
                 "encoding": "utf-8",
                 "store_empty": False,
-                "fields": ["bolum", "konu", "soru", "cevap", "secenekler", "dusunce", "cikti", "deepseek_cevap", "isabet"],
+                "fields": ["bolum", "konu", "soru", "cevap", "secenekler", "harf_secenekler", "dusunce", "cikti", "deepseek_cevap", "dogru_cevap", "isabet"],
                 "overwrite": True,
             },
         },
@@ -92,7 +94,11 @@ class DeepSeekSamplerSpider(scrapy.Spider):
 
     def start_requests(self):
         self.request_count = len(self.batch)
-        self.progress_bar = tqdm(total=self.request_count, desc="Sampling Progress", unit="req")
+        self.progress_bar = tqdm(
+            total=self.request_count,
+            desc="Sampling Progress",
+            unit="req"
+        )
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -120,11 +126,14 @@ class DeepSeekSamplerSpider(scrapy.Spider):
                 meta={"data": row},
                 callback=self.parse
             )
-    
-    def build_prompt(self, question, options):
+
+    def format_options(self, options):
         option_labels = ['A', 'B', 'C', 'D', 'E'][:len(options)]
         formatted_options = "\n".join(f"{label}) {opt}" for label, opt in zip(option_labels, options))
-        
+        return formatted_options
+    
+    def build_prompt(self, question, options):
+        formatted_options = self.format_options(options)
         return f"Soru: {question}\nSeçenekler:\n{formatted_options}\nDoğru cevabın harfini (A, B, C, D, E) ver."
 
     def parse_reasoned_output(self, output):
@@ -164,8 +173,15 @@ class DeepSeekSamplerSpider(scrapy.Spider):
     def letter_to_index(self, letter):
         return ord(letter.upper()) - ord('A')
     
+    def index_to_letter(self, index):
+        return chr(index + ord('A'))
+    
     def get_accuracy(self, deepseek_answer, correct_answer):
-        return "Doğru" if deepseek_answer == correct_answer else "Yanlış"
+        if deepseek_answer != "Bilinmiyor":
+            deepseek_answer = self.letter_to_index(deepseek_answer)
+            return "Doğru" if deepseek_answer == correct_answer else "Yanlış"
+        else:
+            return "Bilinmiyor"
 
     def parse(self, response):
         row = response.meta.get("data", {})
@@ -173,8 +189,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
         output = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         reasoning, output_message = self.parse_reasoned_output(output)
         deepseek_answer = self.parse_correct_answer(output_message)
-        deepseek_answer = self.letter_to_index(deepseek_answer) if deepseek_answer != "Bilinmiyor" else deepseek_answer
-        accuracy = self.get_accuracy(deepseek_answer, row["cevap"]) if deepseek_answer != "Bilinmiyor" else "Bilinmiyor"
+        accuracy = self.get_accuracy(deepseek_answer, row["cevap"])
 
         self.completed_requests += 1
         self.progress_bar.update(1)
@@ -185,9 +200,11 @@ class DeepSeekSamplerSpider(scrapy.Spider):
             soru=row["soru"],
             cevap=row["cevap"],
             secenekler=row["secenekler"],
+            harf_secenekler=self.format_options(row["secenekler"]),
             dusunce=reasoning.strip(),
             cikti=output_message.strip(),
             deepseek_cevap=deepseek_answer,
+            dogru_cevap=self.index_to_letter(row["cevap"]),
             isabet=accuracy
         )
 
