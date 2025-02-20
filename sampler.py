@@ -42,6 +42,7 @@ class DeepSeekSample(scrapy.Item):
     cevap = scrapy.Field()
     secenekler = scrapy.Field()
     harf_secenekler = scrapy.Field()
+    deepseek_prompt = scrapy.Field()
     dusunce = scrapy.Field()
     cikti = scrapy.Field()
     deepseek_cevap = scrapy.Field()
@@ -73,7 +74,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
                 "format": "csv",
                 "encoding": "utf-8",
                 "store_empty": False,
-                "fields": ["bolum", "konu", "soru", "cevap", "secenekler", "harf_secenekler", "dusunce", "cikti", "deepseek_cevap", "dogru_cevap", "isabet"],
+                "fields": ["bolum", "konu", "soru", "cevap", "secenekler", "harf_secenekler", "deepseek_prompt", "dusunce", "cikti", "deepseek_cevap", "dogru_cevap", "isabet"],
                 "overwrite": True,
             },
         },
@@ -185,6 +186,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
 
     def parse(self, response):
         row = response.meta.get("data", {})
+        prompt = self.build_prompt(row['soru'], row['secenekler'])
         response = response.json()
         output = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         reasoning, output_message = self.parse_reasoned_output(output)
@@ -201,6 +203,7 @@ class DeepSeekSamplerSpider(scrapy.Spider):
             cevap=row["cevap"],
             secenekler=row["secenekler"],
             harf_secenekler=self.format_options(row["secenekler"]),
+            deepseek_prompt=prompt,
             dusunce=reasoning.strip(),
             cikti=output_message.strip(),
             deepseek_cevap=deepseek_answer,
